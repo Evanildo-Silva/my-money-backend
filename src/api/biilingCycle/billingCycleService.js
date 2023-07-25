@@ -33,4 +33,23 @@ BillingCycle.route('get', (req, res, next) => {
 
 })
 
+BillingCycle.route('summary', (req, res, next) => {
+  BillingCycle.aggregate({
+    // Extraindo todos od creditos e debitos de cada ciclo de pagamento
+    $project: { credit: { $sum: "$credits.value" }, debt: { $sum: "$debts.value" } }
+  }, {
+    // Agrupando e somando tudo que foi obtido no project
+    $group: { _id: null, credit: { $sum: "$credit" }, debt: { $sum: "$debt" } }
+  }, {
+    // Retirando o id e projentando os resultados
+    $project: { _id: 0, credit: 1, debt: 1 }
+  }, (error, result) => {
+    if (error) {
+      res.status(500).json({ errors: [error] })
+    } else {
+      res.json(result[0] || { credit: 0, debt: 0 })
+    }
+  })
+})
+
 module.exports = BillingCycle
