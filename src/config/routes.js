@@ -1,12 +1,22 @@
 const express = require('express')
-
-// Está sendo importado como função para receber o server como parâmetro já que server já foi instanciado em outro arquivo
+const auth = require('./auth')
 module.exports = function (server) {
-  // Definir URL base
-  const router = express.Router() // Criando uma instância de Router
-  server.use('/api', router)
-
-  // Rotas de Clico de pagamento
-  const BillingCycle = require('../api/biilingCycle/billingCycleService')
-  BillingCycle.register(router, '/billingCycles')
+  /*
+  * Rotas protegidas por Token JWT
+  */
+  const protectedApi = express.Router()
+  server.use('/api', protectedApi)
+  protectedApi.use(auth)
+  const BillingCycle = require('../api/billingCycle/billingCycleService')
+  BillingCycle.register(protectedApi, '/billingCycles')
+  /*
+  * Rotas abertas
+  */
+  const openApi = express.Router()
+  server.use('/oapi', openApi)
+  const AuthService = require('../api/user/AuthService')
+  openApi.post('/login', AuthService.login)
+  openApi.post('/signup', AuthService.signup)
+  openApi.post('/validateToken', AuthService.validateToken)
 }
+
